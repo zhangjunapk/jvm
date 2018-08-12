@@ -31,12 +31,14 @@ public class JvmMethod {
     }
 
     //方法的执行
-    public void invoke(ShareData shareData, ThreadPrivateData threadPrivateData) throws NoSuchMethodException {
+    public void invoke(ShareData shareData, ThreadPrivateData threadPrivateData) throws Exception {
+
+        System.out.println("方法开始执行了  "+threadPrivateData.getJavaStack().getConstantPool()+"   这是常量池");
 
         Code_attribute codeAttribute = (Code_attribute)method.attributes.get("Code");
 
         //初始化局部变量表
-        threadPrivateData.setJavaStack(new JavaStack());
+        //-------我又犯2了------
         threadPrivateData.getJavaStack().setLocalVariometer(new LocalVariableTable(codeAttribute.max_locals));
         //初始化操作数栈
         threadPrivateData.getJavaStack().setOperandStack(new OperandStack(codeAttribute.max_stack));

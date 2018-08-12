@@ -5,17 +5,13 @@ import java.lang.reflect.Method;
  */
 public class Demo {
 
-    static{
-        System.out.println("love you");
-    }
+    static String str="staticString";
     public static void main(String[] args) {
 
-        int a=5;
-        int b=9;
-        int c=10;
-        int d=66;
-        a=a+b;
-        b=b+c;
-        a=a+b+d;
+       int a=5;
+       int b=5;
+       int c=a+b;
+       String s=str;
+        System.out.println("hello world");
     }
 }

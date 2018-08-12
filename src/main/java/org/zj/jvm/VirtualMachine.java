@@ -54,7 +54,7 @@ public class VirtualMachine {
      * @throws IOException
      * @throws ConstantPoolException
      */
-    public void run(String className) throws IOException, ConstantPoolException, ClassNotFoundException, NoSuchMethodException {
+    public void run(String className) throws Exception {
 
         //先从堆中获得，如果没有就初始化类
         JvmInitedClass jvmInitedClass = shareData.getHeap().get(className);
@@ -75,7 +75,7 @@ public class VirtualMachine {
      * @param className
      * @throws ConstantPoolException
      */
-    private JvmInitedClass initClassAndInflate(String className) throws ConstantPoolException, ClassNotFoundException, NoSuchMethodException {
+    private JvmInitedClass initClassAndInflate(String className) throws Exception {
         ClassFile classFile=shareData.getMethodArea().get(className).getClassFile();
         if(classFile==null){
             throw new ClassNotFoundException();

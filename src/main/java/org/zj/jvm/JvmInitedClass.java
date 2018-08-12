@@ -32,7 +32,7 @@ public class JvmInitedClass extends JvmClass{
     public void setMethodMap(Map<Map.Entry<String, String>, JvmMethod> methodMap) {
         this.methodMap = methodMap;
     }
-    public void run(ShareData shareData) throws ConstantPoolException, NoSuchMethodException {
+    public void run(ShareData shareData) throws Exception {
         //获得要执行的类中的main方法
         JvmMethod jvmMethod = shareData.getHeap().get(getClassFile().getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("main", "([Ljava/lang/String;)V"));
         //线程每次执行的时候都会创建栈帧(这里面保存了局部变量表/操作数栈/计数器)
