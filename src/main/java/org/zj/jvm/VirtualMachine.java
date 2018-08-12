@@ -1,9 +1,7 @@
 package org.zj.jvm;
 
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.Code_attribute;
-import com.sun.tools.classfile.ConstantPoolException;
-import com.sun.tools.classfile.Method;
+import com.sun.org.apache.bcel.internal.Constants;
+import com.sun.tools.classfile.*;
 import sun.tools.java.ClassNotFound;
 
 import java.io.File;
@@ -56,17 +54,20 @@ public class VirtualMachine {
      * @throws IOException
      * @throws ConstantPoolException
      */
-    public void run(String className) throws IOException, ConstantPoolException, ClassNotFoundException {
+    public void run(String className) throws IOException, ConstantPoolException, ClassNotFoundException, NoSuchMethodException {
 
         //先从堆中获得，如果没有就初始化类
         JvmInitedClass jvmInitedClass = shareData.getHeap().get(className);
 
         if(jvmInitedClass==null){
-            initClassAndInflate(className);
+
+            System.out.println("堆中没有，需要初始化");
+
+            jvmInitedClass=initClassAndInflate(className);
         }
 
         //执行main方法
-        jvmInitedClass.run(shareData,new ThreadPrivateData());
+        jvmInitedClass.run(shareData);
     }
 
     /**
@@ -74,16 +75,16 @@ public class VirtualMachine {
      * @param className
      * @throws ConstantPoolException
      */
-    private void initClassAndInflate(String className) throws ConstantPoolException, ClassNotFoundException {
+    private JvmInitedClass initClassAndInflate(String className) throws ConstantPoolException, ClassNotFoundException, NoSuchMethodException {
         ClassFile classFile=shareData.getMethodArea().get(className).getClassFile();
         if(classFile==null){
             throw new ClassNotFoundException();
         }
 
-        JvmInitedClass jvmClass=new JvmInitedClass();
+        JvmInitedClass jvmInitedClass=new JvmInitedClass();
 
-        jvmClass.setClassFile(classFile);
-        jvmClass.setConstantPool(classFile.constant_pool);
+        jvmInitedClass.setClassFile(classFile);
+        jvmInitedClass.setConstantPool(classFile.constant_pool);
         Map<Map.Entry<String,String>,JvmMethod> methodMap=new HashMap<>();
         //处理所有方法
         for(Method method:classFile.methods){
@@ -100,11 +101,16 @@ public class VirtualMachine {
 
             JvmMethod jvmMethod=new JvmMethod();
             List<Opcode> opcodes=new ArrayList<>();
-            for(Byte b:code.code){
-                short c = (short)(0xff&b);
+            for(int i=0;i<code.code.length;i++){
+                short c = (short)(0xff&code.code[i]);
+                Opcode opcode = Opcode.opcodeMap.get(c);
+                //数据在常量池中索引的数组 0 号元素表示在常量池中的索引
+                byte[] operands = Arrays.copyOfRange(code.code, i + 1, i + 1 + Constants.NO_OF_OPERANDS[c]);
 
-                if(Opcode.opcodeMap.get(c)!=null)
-                    opcodes.add(Opcode.opcodeMap.get(c));
+                // TODO: 2018/8/12 这里还要获得每个指令的数组
+                //为每个用类表示的指令设置指令数组 比如 ldc 4 这就表示一个数组 0号元素是ldc 1号元素是4
+                if(opcode!=null)
+                    opcodes.add(opcode.setCurrentInstruction(operands));
 
                 System.out.println(c);
             }
@@ -113,14 +119,15 @@ public class VirtualMachine {
             jvmMethod.setMethod(method);
             methodMap.put(new AbstractMap.SimpleEntry<>(name,value),jvmMethod);
         }
-        jvmClass.setMethodMap(methodMap);
+        jvmInitedClass.setMethodMap(methodMap);
 
         //存放到堆区
-        shareData.getHeap().put(classFile.getName(),jvmClass);
+        shareData.getHeap().put(classFile.getName(),jvmInitedClass);
 
         //应该先执行static 方法
 
-        JvmMethod staticMethod= shareData.getHeap().get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<static>", "()V"));
+        JvmMethod staticMethod= shareData.getHeap().get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<init>", "()V"));
+
 
         staticMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
 
@@ -128,7 +135,7 @@ public class VirtualMachine {
         JvmMethod initMethod= shareData.getHeap().get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<clinit>", "()V"));
         //把常量池弄到线程私有的数据区域
         initMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
-
+        return jvmInitedClass;
     }
 
     /**

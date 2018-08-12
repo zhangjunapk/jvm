@@ -24,15 +24,19 @@ public class LocalVariableTable {
         values[index++] = obj;
         return obj;
     }
-
+    //将指定对象放到指定位置
+    public Object put(Object obj,int index){
+        System.out.println("接受过来的数据"+obj);
+        values[index]=obj;
+        System.out.println(values[index]+"   我放到局部变量表中了   "+index);
+        return obj;
+    }
 
     public static void main(String[] main){
         LocalVariableTable localVariableTable=new LocalVariableTable(5);
-        localVariableTable.put("a");
-        localVariableTable.put("b");
+        localVariableTable.put("a",2);
         try {
-            System.out.println(localVariableTable.get(0));
-            System.out.println(localVariableTable.get(1));
+            System.out.println(localVariableTable.get(2));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }

@@ -30,41 +30,54 @@ public class OperandStack {
      * @return
      */
     public Object push(Object obj) {
-        values[index++] = obj;
+        values[this.index++] = obj;
+        System.out.println("当前栈顶的数据" + pick());
         return obj;
     }
 
     /**
      * 栈顶出栈
+     *
      * @return
      */
-    public Object pop(){
-        if(index<values.length&&index>=0){
-            values[index]=null;
-            return values[index--];
+    public Object pop() {
+
+        System.out.println("当前操作数栈的元素");
+        for(Object o:values){
+            System.out.println("  "+o);
         }
-        throw new  NoSuchElementException();
+        System.out.println("end ");
+        Object result = values[index - 1 < 0 ? 0 : index - 1];
+        values[index - 1 < 0?0:index - 1] =null;
+
+        //后面的数据应该上移
+        for (int i = 0; i < values.length - 1; i++) {
+            if (values[i] == null) {
+                values[i] = values[i + 1];
+                values[i + 1] = null;
+            }
+        }
+        index--;
+
+        return result;
     }
 
     /**
      * 获得栈顶数据，不出栈
+     *
      * @return
      */
-    public Object pick(){
-
-        System.out.println(index);
-
-        if(index<values.length&&index>=0){
-            return values[index-1<=0?0:index-1];
-        }
-        throw new  NoSuchElementException();
+    public Object pick() {
+        return values[index - 1 <= 0 ? 0 : index - 1];
     }
 
     public static void main(String[] args) {
-        OperandStack operandStack=new OperandStack(5);
+        OperandStack operandStack = new OperandStack(2);
         operandStack.push("a");
         operandStack.push("b");
-        System.out.println(operandStack.pick());
+        Object pop = operandStack.pop();
+        System.out.println(pop);
+        System.out.println(operandStack.pop());
 
     }
 

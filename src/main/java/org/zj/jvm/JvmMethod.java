@@ -31,7 +31,7 @@ public class JvmMethod {
     }
 
     //方法的执行
-    public void invoke(ShareData shareData, ThreadPrivateData threadPrivateData){
+    public void invoke(ShareData shareData, ThreadPrivateData threadPrivateData) throws NoSuchMethodException {
 
         Code_attribute codeAttribute = (Code_attribute)method.attributes.get("Code");
 
@@ -41,13 +41,11 @@ public class JvmMethod {
         //初始化操作数栈
         threadPrivateData.getJavaStack().setOperandStack(new OperandStack(codeAttribute.max_stack));
 
-        //初始化常量池
-
 
         System.out.println("遍历每个指令并执行");
-
+        //我还需要当前要执行的指令 比如 ldc 4 我需要从常量池获得索引为4的元素
         for(Opcode opcode:opcodes){
-            opcode.invoke(shareData, threadPrivateData);
+            opcode.invoke(shareData, threadPrivateData,opcode.getCurrentInstruction());
         }
 
     }

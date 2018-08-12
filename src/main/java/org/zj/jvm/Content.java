@@ -8,7 +8,7 @@ import java.io.IOException;
  * Created by ZhangJun on 2018/8/10.
  */
 public class Content {
-    public static void main(String[] args) throws IOException, ConstantPoolException {
+    public static void main(String[] args) throws IOException, ConstantPoolException, ClassNotFoundException, NoSuchMethodException {
         new VirtualMachine("E:\\java\\base\\jvm\\src\\main\\java\\").run("Demo");
     }
 }
