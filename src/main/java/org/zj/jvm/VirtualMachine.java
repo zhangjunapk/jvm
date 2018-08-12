@@ -4,6 +4,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Method;
+import sun.tools.java.ClassNotFound;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,25 +24,27 @@ public class VirtualMachine {
      * @param classPath
      */
     public VirtualMachine(String classPath){
+        //初始化共享区域的方法区和堆区
         initShareData(classPath);
     }
 
     /**
      * 递归放到方法区
-     * @param shareData
      * @param file
      */
-    private void loadClass(ShareData shareData, File file) {
+    private void loadClass(File file) {
         if(file!=null&&file.isFile()&&file.getName().endsWith(".class")){
             try{
                 //将类信息放到方法区
-                initClassAndInflate(shareData.getMethodArea(),file);
+                ClassFile classFile=ClassFile.read(file);
+                shareData.getMethodArea().put(classFile.getName(),new JvmClass().setClassFile(classFile));
+
             }catch (Exception e){
             }
         }
         if(file.isDirectory()){
             for(File f:file.listFiles()){
-                loadClass(shareData,f);
+                loadClass(f);
             }
         }
 
@@ -53,28 +56,32 @@ public class VirtualMachine {
      * @throws IOException
      * @throws ConstantPoolException
      */
-    public void run(String className) throws IOException, ConstantPoolException {
-        //从共享区域获得jvmClass
-        JvmClass jvmClass = shareData.getMethodArea().get(className);
+    public void run(String className) throws IOException, ConstantPoolException, ClassNotFoundException {
+
+        //先从堆中获得，如果没有就初始化类
+        JvmInitedClass jvmInitedClass = shareData.getHeap().get(className);
+
+        if(jvmInitedClass==null){
+            initClassAndInflate(className);
+        }
+
         //执行main方法
-        jvmClass.run(shareData,new ThreadPrivateData());
+        jvmInitedClass.run(shareData,new ThreadPrivateData());
     }
 
     /**
-     * 对类进行初始化并放到方法区
-     * @param methodArea
-     * @param file
+     * 初始化类并放到堆中
+     * @param className
      * @throws ConstantPoolException
      */
-    private void initClassAndInflate(Map<String,JvmClass> methodArea, File file) throws ConstantPoolException {
-        ClassFile classFile;
-        try{
-            classFile=ClassFile.read(file);
-        }catch (Exception e){
-            return;
+    private void initClassAndInflate(String className) throws ConstantPoolException, ClassNotFoundException {
+        ClassFile classFile=shareData.getMethodArea().get(className).getClassFile();
+        if(classFile==null){
+            throw new ClassNotFoundException();
         }
 
-        JvmClass jvmClass=new JvmClass();
+        JvmInitedClass jvmClass=new JvmInitedClass();
+
         jvmClass.setClassFile(classFile);
         jvmClass.setConstantPool(classFile.constant_pool);
         Map<Map.Entry<String,String>,JvmMethod> methodMap=new HashMap<>();
@@ -108,14 +115,17 @@ public class VirtualMachine {
         }
         jvmClass.setMethodMap(methodMap);
 
+        //存放到堆区
+        shareData.getHeap().put(classFile.getName(),jvmClass);
+
         //应该先执行static 方法
 
-        JvmMethod staticMethod= methodArea.get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<static>", "()V"));
+        JvmMethod staticMethod= shareData.getHeap().get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<static>", "()V"));
 
         staticMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
 
         //执行jvmclass的空参构造
-        JvmMethod initMethod= methodArea.get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<clinit>", "()V"));
+        JvmMethod initMethod= shareData.getHeap().get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<clinit>", "()V"));
         //把常量池弄到线程私有的数据区域
         initMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
 
@@ -126,17 +136,16 @@ public class VirtualMachine {
      * @param classPath
      */
     public void initShareData(String classPath){
+
+        shareData.setMethodArea(new HashMap<String, JvmClass>());
+
         // 将类信息放到方法区
 
         //最开始就初始化共享区域
         File file=new File(classPath);
-
-        for(File f:file.listFiles()){
-            //将每个类解析出来放到方法区
-            loadClass(shareData,f);
-        }
+        loadClass(file);
         //初始化堆区
-
+        shareData.setHeap(new HashMap<String, JvmInitedClass>());
     }
 
 }
