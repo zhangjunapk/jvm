@@ -1,7 +1,6 @@
 package org.zj.jvm;
 
 import com.sun.org.apache.bcel.internal.Constants;
-import com.sun.org.apache.xpath.internal.compiler.OpMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +14,7 @@ public enum Opcode {
     //将0推入操作数栈
     ICONST_0(Constants.ICONST_0){
         @Override
-        public void invoke(ShareData shareData, ThreanPrivateData threanPrivateData) {
+        public void invoke(ShareData shareData, ThreadPrivateData threadPrivateData) {
 
         }
     };
@@ -28,7 +27,7 @@ public enum Opcode {
 
 
     //我需要共享区域,还有常量池/局部变量表/操作数栈/计数器
-    public abstract void invoke(ShareData shareData, ThreanPrivateData threanPrivateData);
+    public abstract void invoke(ShareData shareData, ThreadPrivateData threadPrivateData);
 
 
     static{

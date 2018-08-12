@@ -54,12 +54,10 @@ public class VirtualMachine {
      * @throws ConstantPoolException
      */
     public void run(String className) throws IOException, ConstantPoolException {
-
-        //获得环境中要执行的类中的main方法
-        JvmMethod jvmMethod = shareData.getMethodArea().get(className).getMethodMap().get(new AbstractMap.SimpleEntry<>("main", "([Ljava/lang/String;)V"));
-        //线程每次执行的时候都会创建栈帧(这里面保存了局部变量表/操作数栈/计数器)
-        jvmMethod.invoke(shareData,new ThreanPrivateData());
-
+        //从共享区域获得jvmClass
+        JvmClass jvmClass = shareData.getMethodArea().get(className);
+        //执行main方法
+        jvmClass.run(shareData,new ThreadPrivateData());
     }
 
     /**
@@ -114,13 +112,12 @@ public class VirtualMachine {
 
         JvmMethod staticMethod= methodArea.get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<static>", "()V"));
 
-        staticMethod.invoke(shareData,new ThreanPrivateData());
-
+        staticMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
 
         //执行jvmclass的空参构造
         JvmMethod initMethod= methodArea.get(classFile.getName()).getMethodMap().get(new AbstractMap.SimpleEntry<>("<clinit>", "()V"));
-
-        initMethod.invoke(shareData,new ThreanPrivateData());
+        //把常量池弄到线程私有的数据区域
+        initMethod.invoke(shareData,new ThreadPrivateData().setJavaStack(new JavaStack().setConstantPool(classFile.constant_pool)));
 
     }
 
