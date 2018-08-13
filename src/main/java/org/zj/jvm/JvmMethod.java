@@ -38,7 +38,6 @@ public class JvmMethod {
         Code_attribute codeAttribute = (Code_attribute)method.attributes.get("Code");
 
         //初始化局部变量表
-        //-------我又犯2了------
         threadPrivateData.getJavaStack().setLocalVariometer(new LocalVariableTable(codeAttribute.max_locals).setParam(param));
         //初始化操作数栈
         threadPrivateData.getJavaStack().setOperandStack(new OperandStack(codeAttribute.max_stack));
