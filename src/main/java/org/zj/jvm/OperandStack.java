@@ -81,4 +81,12 @@ public class OperandStack {
 
     }
 
+    //操作数栈中出栈指定数量
+    public Object[] muiltePop(int parameterCount) {
+        Object[] result=new Object[parameterCount];
+        for(int i=0;i<parameterCount;i++){
+            result[i]=pop();
+        }
+        return result;
+    }
 }

@@ -9,7 +9,6 @@ import java.io.IOException;
  */
 public class Content {
     public static void main(String[] args) throws Exception {
-        new VirtualMachine("E:\\java\\base\\jvm\\src\\main\\java\\").run("Demo");
-
+        new VirtualMachine("E:\\rt","E:\\java\\base\\jvm\\src\\main\\java\\").run("Demo");
     }
 }

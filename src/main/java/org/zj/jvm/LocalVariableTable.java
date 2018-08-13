@@ -1,6 +1,8 @@
 package org.zj.jvm;
 
 
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * Created by ZhangJun on 2018/8/11.
@@ -17,7 +19,10 @@ public class LocalVariableTable {
         if (index >= 0 && index < values.length) {
             return values[index];
         }
-        throw new NoSuchMethodException();
+        System.out.println("当前局部变量表中的数据");
+        System.out.println(Arrays.toString(values));
+        System.out.println("----------");
+        throw new NoSuchElementException();
     }
 
     public Object put(Object obj) {
@@ -31,7 +36,13 @@ public class LocalVariableTable {
         System.out.println(values[index]+"   我放到局部变量表中了   "+index);
         return obj;
     }
-
+    //把方法里面的参数放进去
+    public LocalVariableTable setParam(Object[] param){
+        for(Object obj:param){
+            put(obj);
+        }
+        return this;
+    }
     public static void main(String[] main){
         LocalVariableTable localVariableTable=new LocalVariableTable(5);
         localVariableTable.put("a",2);
